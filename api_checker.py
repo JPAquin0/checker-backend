@@ -12,12 +12,14 @@ load_dotenv()
 
 app = FastAPI()
 
-# Permite que o frontend (hospedado em qualquer lugar) acesse esta API.
+# --- Bloco de CORS Corrigido ---
+# Esta configuração garante que o navegador possa fazer a "sondagem"
+# com o método OPTIONS antes de enviar os dados com POST.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["POST", "GET", "OPTIONS"],  # Explicitamente permite OPTIONS
     allow_headers=["*"],
 )
 
@@ -53,7 +55,7 @@ async def verificar_token(request: Request):
             }
         )
 
-    # ✨ SUGESTÃO IMPLEMENTADA: Gera um e-mail aleatório para evitar bloqueios
+    # Gera um e-mail aleatório para cada verificação para evitar bloqueios
     random_user = ''.join(random.choices(string.ascii_lowercase, k=10))
     payer_email = f"user_{random_user}@test.com"
 
@@ -71,7 +73,7 @@ async def verificar_token(request: Request):
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json",
-        "X-Idempotency-Key": os.urandom(16).hex()
+        "X-Idempotency-Key": os.urandom(16).hex() # Previne cobranças duplicadas
     }
 
     try:
@@ -98,7 +100,6 @@ async def verificar_token(request: Request):
         else:
             mensagem_erro = "Pagamento não aprovado."
             if resultado.get("cause") and len(resultado.get("cause", [])) > 0:
-                 # Adicionado um valor padrão para 'cause' para segurança
                 mensagem_erro = resultado["cause"][0].get("description", mensagem_erro)
             
             return {
