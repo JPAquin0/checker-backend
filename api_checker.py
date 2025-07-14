@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime, timezone # <--- ADICIONADO PARA O STATUS
 
 # Carrega as variáveis de ambiente do arquivo .env (para teste local)
 load_dotenv()
@@ -25,6 +26,17 @@ app.add_middleware(
 
 # Pega o Access Token das variáveis de ambiente de forma segura
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+
+# ---- NOVA FUNCIONALIDADE: ENDPOINT DE STATUS DA API ----
+# Seu painel vai usar esta rota para verificar se a API está "viva".
+@app.get("/")
+def get_api_status():
+    return {
+        "status": "online",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "version": "v4-final-with-status" # Nova versão para confirmar a atualização
+    }
+# ---------------------------------------------------------
 
 @app.post("/verificar")
 async def verificar_token(request: Request):
